@@ -1,13 +1,10 @@
 import axios from "axios";
 
-const endpoint = "https://uptek-store.myshopify.com/api/2024-01/graphql.json";
-
-const graphqlQuery = {
-  query: `
-  {
-    products(first: 11) {
-      edges {
-        node {
+export const getSingleProduct = async (productId, imagesPerItem = 3) => {
+  const graphqlQuery = {
+    query: `
+    {
+        product(id: ${productId}) {
           id
           title
           handle
@@ -22,7 +19,7 @@ const graphqlQuery = {
               }
             }
           }
-          images(first: 1) {
+          images(first: ${imagesPerItem}) {
             edges {
               node {
                 originalSrc
@@ -31,13 +28,9 @@ const graphqlQuery = {
           }
         }
       }
-    }
-}
-
     `,
-};
+  };
 
-export const getShopifyData = async () => {
   try {
     const response = await axios.post(process.env.BASE_URL, graphqlQuery, {
       headers: {
@@ -47,6 +40,8 @@ export const getShopifyData = async () => {
         // Include any other headers required for your GraphQL endpoint
       },
     });
+
+    console.log("GraphQL Response:", response.data);
     return response.data; // You might want to return the data or process it further
   } catch (error) {
     console.error("GraphQL Request Error:", error);

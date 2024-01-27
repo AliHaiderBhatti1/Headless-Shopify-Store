@@ -32,20 +32,26 @@
       <!-- <v-btn icon @click.stop="clipped = !clipped">
         <v-icon>mdi-application</v-icon>
       </v-btn> -->
-      <div style="width: 50%;" class="d-flex justify-space-around">
-      <span class="pointer" @click="$router.push('/')"> Home </span>
-      <span class="pointer" @click="$router.push('/men-categories')"> Men </span>
-      <span class="pointer" @click="$router.push('/women-categories')"> Women </span>
-      <span class="pointer" @click="$router.push('/kids-categories')"> Kids </span>
-      <span class="pointer"> Contact Us</span>
-    </div>
+      <div style="width: 50%" class="d-flex justify-space-around">
+        <span class="pointer" @click="$router.push('/')"> Home </span>
+        <span class="pointer" @click="$router.push('/men-categories')">
+          Men
+        </span>
+        <span class="pointer" @click="$router.push('/women-categories')">
+          Women
+        </span>
+        <span class="pointer" @click="$router.push('/kids-categories')">
+          Kids
+        </span>
+        <span class="pointer"> Contact Us</span>
+      </div>
       <v-spacer />
       <v-btn icon @click.stop="rightDrawer = !rightDrawer">
         <v-icon>mdi-cart</v-icon>
       </v-btn>
     </v-app-bar>
     <v-main>
-        <Nuxt />
+      <Nuxt />
     </v-main>
     <v-navigation-drawer v-model="rightDrawer" :right="right" temporary fixed>
       <v-list>
@@ -64,11 +70,14 @@
 </template>
 
 <script>
-import { getProducts } from '../services/apiService';
+import { getShopifyData } from "../services/apiService";
+import { mapState } from "pinia";
+import { useStore } from "../store/index";
 export default {
   name: "DefaultLayout",
   data() {
     return {
+      img: null,
       clipped: false,
       drawer: false,
       fixed: false,
@@ -91,10 +100,14 @@ export default {
     };
   },
   created() {
-    getProducts().then((res) => {
-      console.log('res', res)
-    })
-  }
+    // getShopifyData().then((res) => {
+    //   console.log(
+    //     "res",
+    //     (this.img =
+    //       res.data.products.edges[0].node.images.edges[0].node.originalSrc)
+    //   );
+    // });
+  },
 };
 </script>
 <style scoped>

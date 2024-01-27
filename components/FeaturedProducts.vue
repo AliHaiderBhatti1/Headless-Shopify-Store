@@ -14,6 +14,7 @@
               :key="item.id"
               v-slot="{ hover }"
               close-delay="200"
+              class="mx-3"
             >
               <div>
                 <v-card
@@ -27,16 +28,22 @@
                   >
                     <img
                       contain
-                      :src="hover ? item.frontView : item.sideView"
+                      :src="
+                        hover
+                          ? item.node.images.edges[0].node.originalSrc
+                          : item.node.images.edges[1].node.originalSrc
+                      "
                       style="object-fit: contain; width: 100%; height: 300px"
                     />
                   </v-card-text>
                 </v-card>
                 <div class="d-flex justify-center mt-2">
-                  <div class="pointer text-body-1">{{ item.name }}</div>
+                  <div class="pointer text-body-1">{{ item.node.title }}</div>
                 </div>
                 <div class="d-flex justify-center">
-                  <div class="pointer text-body-2">{{ item.price }}</div>
+                  <div class="pointer text-body-2">
+                    {{ getProductAmount(item) }}
+                  </div>
                 </div>
               </div>
             </v-hover>
@@ -47,87 +54,44 @@
   </div>
 </template>
 <script>
+import { mapActions, mapState } from "pinia";
+import { useStore } from "../store/index";
+// import getProductAmount from "../utils/utils";
 export default {
   name: "FeaturedProducts",
   data() {
     return {
       groupSize: 3,
-      items: [
-        {
-          id: 1,
-          frontView: require("@/assets/images/trouser.webp"),
-          sideView: require("@/assets/images/trouser1.webp"),
-          name: "White Black Trousers",
-          price: "Rs. 3,199 PKR",
-        },
-        {
-          id: 2,
-          frontView: require("@/assets/images/trouser.webp"),
-          sideView: require("@/assets/images/trouser1.webp"),
-          name: "White Black Trousers",
-          price: "Rs. 3,199 PKR",
-        },
-        {
-          id: 3,
-          frontView: require("@/assets/images/trouser.webp"),
-          sideView: require("@/assets/images/trouser1.webp"),
-          name: "White Black Trousers",
-          price: "Rs. 3,199 PKR",
-        },
-        {
-          id: 4,
-          frontView: require("@/assets/images/trouser.webp"),
-          sideView: require("@/assets/images/trouser1.webp"),
-          name: "White Black Trousers",
-          price: "Rs. 3,199 PKR",
-        },
-        {
-          id: 5,
-          frontView: require("@/assets/images/trouser.webp"),
-          sideView: require("@/assets/images/trouser1.webp"),
-          name: "White Black Trousers",
-          price: "Rs. 3,199 PKR",
-        },
-        {
-          id: 6,
-          frontView: require("@/assets/images/trouser.webp"),
-          sideView: require("@/assets/images/trouser1.webp"),
-          name: "White Black Trousers",
-          price: "Rs. 3,199 PKR",
-        },
-        {
-          id: 7,
-          frontView: require("@/assets/images/trouser.webp"),
-          sideView: require("@/assets/images/trouser1.webp"),
-          name: "White Black Trousers",
-          price: "Rs. 3,199 PKR",
-        },
-        {
-          id: 8,
-          frontView: require("@/assets/images/trouser.webp"),
-          sideView: require("@/assets/images/trouser1.webp"),
-          name: "White Black Trousers",
-          price: "Rs. 3,199 PKR",
-        },
-        {
-          id: 9,
-          frontView: require("@/assets/images/trouser.webp"),
-          sideView: require("@/assets/images/trouser1.webp"),
-          name: "White Black Trousers",
-          price: "Rs. 3,199 PKR",
-        },
-      ],
     };
   },
+  computed: {
+    ...mapState(useStore, ["getAllProducts"]),
+    itemCarousels() {
+      const groups = [];
+      for (let i = 0; i < this.getAllProducts.length; i += this.groupSize) {
+        groups.push(this.getAllProducts.slice(i, i + this.groupSize));
+      }
+      return groups;
+    },
+  },
   methods: {
+    ...mapActions(useStore, ["fetchProducts"]),
+
     calculateGroupSize() {
       const container = document.getElementById("feature-product-container");
       if (!container) return;
 
       const containerWidth = container.clientWidth;
       if (containerWidth <= 400) return (this.groupSize = 1);
-      console.log("containerWidth", containerWidth);
       this.groupSize = Math.floor(containerWidth / 260);
+    },
+
+    getProductAmount(item) {
+      return (
+        item.node.variants.edges[0].node.priceV2.amount +
+        " " +
+        item.node.variants.edges[0].node.priceV2.currencyCode
+      );
     },
   },
   created() {
@@ -136,20 +100,15 @@ export default {
   },
   mounted() {
     this.calculateGroupSize();
+    this.fetchProducts("featured-products", 10, 3);
   },
   destroyed() {
     if (process.browser)
       window.removeEventListener("resize", this.calculateGroupSize);
   },
-  computed: {
-    itemCarousels() {
-      const groups = [];
-
-      for (let i = 0; i < this.items.length; i += this.groupSize) {
-        groups.push(this.items.slice(i, i + this.groupSize));
-      }
-
-      return groups;
+  watch: {
+    getAllProducts(val) {
+      console.log("val of getAllProducts", val);
     },
   },
 };
