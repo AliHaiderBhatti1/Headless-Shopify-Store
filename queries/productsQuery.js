@@ -50,8 +50,6 @@ export const getProducts = async (
         // Include any other headers required for your GraphQL endpoint
       },
     });
-
-    console.log("GraphQL Response:", response.data);
     return response.data; // You might want to return the data or process it further
   } catch (error) {
     console.error("GraphQL Request Error:", error);

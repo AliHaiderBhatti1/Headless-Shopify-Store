@@ -1,14 +1,43 @@
 <template>
-  <div style="margin-top: 20px; padding-left: 70px; padding-right: 70px">
+  <div class="px-16 pt-5">
     <h2 class="text-capitalize">{{ category }} Products</h2>
-    <div style="max-width: 300px">
-      <v-text-field
-        v-model="searchByTitle"
-        label="Search by title"
-        hide-details
-        outlined
-        dense
-      ></v-text-field>
+    <v-progress-linear
+      v-if="loader"
+      indeterminate
+      color="teal acent-1"
+    ></v-progress-linear>
+    <div class="mt-3 d-flex flex-wrap justify-end">
+      <div style="max-width: 300px">
+        <v-text-field
+          v-model="searchByTitle"
+          label="Search by title"
+          hide-details
+          outlined
+          dense
+        ></v-text-field>
+      </div>
+      <div class="d-flex">
+        <span class="mt-2 mx-2">Sort by:</span>
+        <v-menu offset-y>
+          <template v-slot:activator="{ on, attrs }">
+            <div v-on="on" v-bind="attrs" class="ml-2 mt-2">
+              {{ sortingOrder ? sortingOrder.title : "Not Selected" }}
+              <v-icon>mdi-menu-down</v-icon>
+            </div>
+          </template>
+          <v-list>
+            <v-list-item
+              v-for="(item, index) in items"
+              :key="index"
+              class="pointer"
+              @click="sortingOrder = item"
+              :class="sortingOrder?.value == item.value && 'bg-selected'"
+            >
+              <v-list-item-title>{{ item.title }}</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+      </div>
     </div>
     <div
       v-if="filteredProducts.length"
@@ -53,7 +82,11 @@
         </div>
       </v-hover>
     </div>
-    <div v-else class="d-flex flex-wrap justify-center align-center">
+    <div
+      v-else
+      class="d-flex flex-wrap justify-center align-center"
+      style="height: calc(100vh - 200px)"
+    >
       No products found.
     </div>
   </div>
@@ -63,31 +96,72 @@
 import { mapActions, mapState } from "pinia";
 import { useStore } from "../store/index";
 export default {
-  name: "WomenCategories",
   data() {
     return {
-      category: null,
-      searchByTitle: null,
+      // Initial state variables
+      loader: false, // Indicates whether data is being loaded
+      category: null, // Selected category filter includes (men, women, kids)
+      searchByTitle: null, // Search filter based on product title
+      sortingOrder: null, // Sorting order for product display
+      items: [
+        // Sorting options for dropdown
+        { title: "Alphabetically A-Z", value: "ascending" },
+        { title: "Alphabetically Z-A", value: "descending" },
+        { title: "Price, low to high", value: "asc" },
+        { title: "Price, high to low", value: "desc" },
+      ],
     };
   },
   computed: {
-    ...mapState(useStore, ["getAllProducts"]),
-
+    ...mapState(useStore, ["getAllProducts"]), // Getter to get all the products to the specific category
+    // Filter the items according to the filter selected
     filteredProducts() {
-      return this.searchByTitle && this.getAllProducts
-        ? this.getAllProducts.filter((item) => {
-            return item.node.title
-              ? item.node.title
-                  .toLowerCase()
-                  .includes(this.searchByTitle.toLowerCase())
-              : false;
-          })
-        : this.getAllProducts;
+      const allProducts = [...this.getAllProducts];
+
+      if (this.searchByTitle) {
+        return allProducts.filter((item) =>
+          item.node.title
+            ? item.node.title
+                .toLowerCase()
+                .includes(this.searchByTitle.toLowerCase())
+            : false
+        );
+      }
+
+      if (
+        this.sortingOrder?.value === "ascending" ||
+        this.sortingOrder?.value === "descending"
+      ) {
+        const sortOrder = this.sortingOrder.value === "ascending" ? 1 : -1;
+
+        return allProducts.sort((a, b) => {
+          const nameA = a.node.title.toUpperCase();
+          const nameB = b.node.title.toUpperCase();
+          return sortOrder * nameA.localeCompare(nameB);
+        });
+      }
+
+      if (
+        this.sortingOrder?.value === "asc" ||
+        this.sortingOrder?.value === "desc"
+      ) {
+        const sortOrder = this.sortingOrder.value === "asc" ? 1 : -1;
+
+        return allProducts.sort((a, b) => {
+          const priceA = a.node.variants.edges[0]?.node.priceV2.amount || 0;
+          const priceB = b.node.variants.edges[0]?.node.priceV2.amount || 0;
+
+          return sortOrder * (priceA - priceB);
+        });
+      }
+
+      return allProducts;
     },
   },
   methods: {
     ...mapActions(useStore, ["fetchProducts"]),
 
+    // Function to get the product amount formatted as "amount currencyCode"
     getProductAmount(item) {
       return (
         item.node.variants.edges[0].node.priceV2.amount +
@@ -96,18 +170,37 @@ export default {
       );
     },
 
+    // Function to open the product detail page by navigating to the specified route
     openProduct(id) {
-      // this.$router.push(`/product-detail/` + id.slice(21));
-      this.$router.push({ path: `/product-detail/` + id });
+      this.$router.push({
+        name: `ProductDetail`, // Assuming there is a route named "ProductDetail"
+        params: { id }, // Passing the product id as a route parameter
+      });
     },
   },
   mounted() {
-    if (this.$route.fullPath == "/kids-categories") this.category = "kids";
-    else if (this.$route.fullPath == "/men-categories") this.category = "men";
-    else if (this.$route.fullPath == "/women-categories")
-      this.category = "women";
-    this.fetchProducts(this.category, 10, 3);
-    console.log("this.$route", this.$route.fullPath);
+    // Set loader to true to indicate that data is being loaded
+    this.loader = true;
+
+    // Get the full path of the current route
+    const fullPath = this.$route.fullPath;
+
+    // Determine the category based on the route path
+    if (fullPath == "/kids-categories") this.category = "kids";
+    else if (fullPath == "/men-categories") this.category = "men";
+    else if (fullPath == "/women-categories") this.category = "women";
+
+    // Check if the fullPath is available
+    if (fullPath)
+      // Fetch products based on category with a limit of 10 items and 3 images per item
+      this.fetchProducts(this.category, 10, 3).finally(
+        () => (this.loader = false)
+      );
   },
 };
 </script>
+<style scoped>
+.bg-selected {
+  background-color: #a7ffeb;
+}
+</style>

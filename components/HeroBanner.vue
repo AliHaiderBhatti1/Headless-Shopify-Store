@@ -9,7 +9,6 @@
         transition="fade-transition"
       ></v-carousel-item>
     </v-carousel>
-    <!-- <img src="../assets/images/banner.webp" class="img-banner" /> -->
   </div>
 </template>
 

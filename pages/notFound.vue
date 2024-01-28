@@ -1,13 +1,14 @@
 <template>
   <div>
-    <AllProducts />
+    <NotFound />
   </div>
 </template>
 
 <script>
 export default {
+  name: "ContactUsPage",
   components: {
-    AllProducts: () => import(`~/components/AllProducts.vue`),
+    NotFound: () => import(`~/components/NotFound.vue`),
   },
 };
 </script>

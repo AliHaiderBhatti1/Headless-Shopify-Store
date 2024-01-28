@@ -25,6 +25,16 @@ export default {
           name: "ProductDetail",
           path: "/product-detail/:id",
           component: resolve(__dirname, "pages/detailPage.vue"),
+        },
+        {
+          name: "ContactUs",
+          path: "/contact-us",
+          component: resolve(__dirname, "pages/contactUsPage.vue"),
+        },
+        {
+          name: "404",
+          path: "/*",
+          component: resolve(__dirname, "pages/notFound.vue"),
         }
       );
     },
@@ -62,7 +72,27 @@ export default {
   ],
 
   // Modules: https://go.nuxtjs.dev/config-modules
-  modules: ["@nuxtjs/axios"],
+  modules: [
+    "@nuxtjs/axios",
+    "nuxt-viewport",
+    "nuxt-breakpoints",
+    [
+      "nuxt-breakpoints",
+      {
+        breakpoints: {
+          // default options
+          sm: 576,
+          md: 768,
+          lg: 992,
+          xl: 1200,
+          options: {
+            polyfill: true,
+            throttle: 200,
+          },
+        },
+      },
+    ],
+  ],
 
   pinia: {
     storesDirs: ["./store/index.js"],

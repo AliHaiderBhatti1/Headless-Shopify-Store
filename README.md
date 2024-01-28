@@ -3,7 +3,7 @@
 ## Build Setup
 
 ```bash
-# install dependencies
+# install dependencies (for node v16 or higher)
 $ npm install
 
 # serve with hot reload at localhost:3000
@@ -15,6 +15,10 @@ $ npm run start
 
 # generate static project
 $ npm run generate
+
+# make env file and add two values in it
+$ SHOPIFY_STOREFRONT_API_TOKEN # a1a21e4a8fb82179560658c61023d765
+$ BASE_URL # https://uptek-store.myshopify.com/api/2024-01/graphql.json
 ```
 
 For detailed explanation on how things work, check out the [documentation](https://nuxtjs.org).
@@ -40,7 +44,6 @@ More information about the usage of this directory in [the documentation](https:
 Layouts are a great help when you want to change the look and feel of your Nuxt app, whether you want to include a sidebar or have distinct layouts for mobile and desktop.
 
 More information about the usage of this directory in [the documentation](https://nuxtjs.org/docs/2.x/directory-structure/layouts).
-
 
 ### `pages`
 

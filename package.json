@@ -16,6 +16,7 @@
     "core-js": "^3.25.3",
     "graphql-request": "^6.1.0",
     "nuxt": "^2.15.8",
+    "nuxt-breakpoints": "^1.1.9",
     "nuxt-graphql-client": "^0.2.33",
     "pinia": "^2.1.7",
     "vue": "^2.7.10",
@@ -24,6 +25,7 @@
     "vuetify": "^2.6.10"
   },
   "devDependencies": {
-    "@nuxtjs/vuetify": "^1.12.3"
+    "@nuxtjs/vuetify": "^1.12.3",
+    "nuxt-viewport": "^2.1.4"
   }
 }

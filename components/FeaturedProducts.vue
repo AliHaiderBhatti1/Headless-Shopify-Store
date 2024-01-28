@@ -1,5 +1,5 @@
 <template>
-  <div style="padding-top: 50px; padding-left: 70px; padding-right: 70px">
+  <div class="px-16 pt-12">
     <h2>Featured Products</h2>
     <div id="feature-product-container" class="d-flex justify-center flex-wrap">
       <v-carousel>
@@ -16,7 +16,7 @@
               close-delay="200"
               class="mx-3"
             >
-              <div>
+              <div @click="openProduct(item.node.id)">
                 <v-card
                   :class="{ 'on-hover': hover }"
                   class="mx-auto"
@@ -56,36 +56,46 @@
 <script>
 import { mapActions, mapState } from "pinia";
 import { useStore } from "../store/index";
-// import getProductAmount from "../utils/utils";
 export default {
   name: "FeaturedProducts",
   data() {
     return {
-      groupSize: 3,
+      groupSize: 3, // data property to set items per carousel
     };
   },
   computed: {
     ...mapState(useStore, ["getAllProducts"]),
+
+    // Getter to divide an array of products into groups of a specified size
     itemCarousels() {
-      const groups = [];
+      const groups = []; // Array to store groups of products
+
+      // Loop through the array of all products
       for (let i = 0; i < this.getAllProducts.length; i += this.groupSize) {
         groups.push(this.getAllProducts.slice(i, i + this.groupSize));
       }
-      return groups;
+      return groups; // Return the array of product groups
     },
   },
   methods: {
     ...mapActions(useStore, ["fetchProducts"]),
 
+    // Function to calculate and set the group size based on the container width
     calculateGroupSize() {
       const container = document.getElementById("feature-product-container");
+
+      // If the container is not found, exit the function
       if (!container) return;
 
+      // Get the width of the container
       const containerWidth = container.clientWidth;
+
+      // If the container width is less than or equal to 400, set groupSize to 1
       if (containerWidth <= 400) return (this.groupSize = 1);
       this.groupSize = Math.floor(containerWidth / 260);
     },
 
+    // Function to get the formatted product amount as "amount currencyCode"
     getProductAmount(item) {
       return (
         item.node.variants.edges[0].node.priceV2.amount +
@@ -93,23 +103,31 @@ export default {
         item.node.variants.edges[0].node.priceV2.currencyCode
       );
     },
+
+    // Function to navigate to the product detail page using the router
+    openProduct(id) {
+      this.$router.push({
+        name: `ProductDetail`, // Assuming there is a route named "ProductDetail"
+        params: { id }, // Passing the product id as a route parameter
+      });
+    },
   },
   created() {
+    // Check if the code is running in the browser environment
     if (process.browser)
       window.addEventListener("resize", this.calculateGroupSize);
   },
   mounted() {
+    // Call the calculateGroupSize method on component mount
     this.calculateGroupSize();
+
+    // Fetch products on component mount with specified parameters
     this.fetchProducts("featured-products", 10, 3);
   },
   destroyed() {
+    // Check if the code is running in the browser environment
     if (process.browser)
       window.removeEventListener("resize", this.calculateGroupSize);
-  },
-  watch: {
-    getAllProducts(val) {
-      console.log("val of getAllProducts", val);
-    },
   },
 };
 </script>

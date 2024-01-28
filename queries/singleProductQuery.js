@@ -4,18 +4,25 @@ export const getSingleProduct = async (productId, imagesPerItem = 3) => {
   const graphqlQuery = {
     query: `
     {
-        product(id: ${productId}) {
+        product(id: "${productId}") {
           id
           title
           handle
           description
-          variants(first: 1) {
+          variants(first: 10) {
             edges {
               node {
+                id
+                title
                 priceV2 {
                   amount
                   currencyCode
                 }
+                selectedOptions {
+                  name
+                  value
+                }
+                availableForSale
               }
             }
           }
@@ -28,6 +35,7 @@ export const getSingleProduct = async (productId, imagesPerItem = 3) => {
           }
         }
       }
+      
     `,
   };
 
@@ -40,8 +48,6 @@ export const getSingleProduct = async (productId, imagesPerItem = 3) => {
         // Include any other headers required for your GraphQL endpoint
       },
     });
-
-    console.log("GraphQL Response:", response.data);
     return response.data; // You might want to return the data or process it further
   } catch (error) {
     console.error("GraphQL Request Error:", error);
