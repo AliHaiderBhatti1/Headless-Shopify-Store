@@ -92,7 +92,7 @@ export const useStore = defineStore("storeId", {
             resolve(res);
           })
           .catch((err) => {
-            this.setSnackbarMsg(err.response.data.errors[0]?.extensions?.code);
+            this.setSnackbarMsg("Something went wrong!");
             reject(er);
           });
       });
@@ -107,7 +107,7 @@ export const useStore = defineStore("storeId", {
             resolve(res);
           })
           .catch((err) => {
-            this.setSnackbarMsg(err.response.data.errors[0]?.extensions?.code);
+            this.setSnackbarMsg("Something went wrong!");
             reject(err);
           });
       });

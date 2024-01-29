@@ -110,22 +110,47 @@
                 <div class="text-subtite-2 mb-4">
                   {{ getProductAmount(item) }}
                 </div>
-                <v-list-item-title class="text-h6 mb-1">
-                  {{ item.title }}
-                </v-list-item-title>
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ on }">
+                    <v-list-item-title v-on="on" class="text-h6 mb-1">
+                      {{ item.title }}
+                    </v-list-item-title>
+                  </template>
+                  <span> {{ item.title }}</span>
+                </v-tooltip>
               </v-list-item-content>
 
-              <img
-                class="mt-2"
-                :src="item?.images?.edges[0]?.node?.originalSrc"
-                height="100"
-              />
+              <img class="mt-2" :src="item?.image?.originalSrc" height="100" />
             </v-list-item>
 
-            <v-card-actions class="d-flex justify-space-between">
-              <span class="text-body-2">Quantity</span>
+            <!-- <v-card-actions> -->
+            <div
+              v-for="(val, index) in item?.selectedOptions"
+              :key="index"
+              class="mx-3"
+            >
+              <div class="d-flex justify-space-between">
+                <span class="mt-2 text-body-2">{{ val.name }}</span>
+                <v-chip small class="mx-2 mt-2" color="teal accent-1">
+                  {{ val.value }}
+                </v-chip>
+              </div>
+              <div class="d-flex flex-wrap mt-2">
+                <!-- <div v-for="(chip, index) in values" :key="index">
+                    <v-chip
+                      class="mx-2 my-1 pointer"
+                      :color="checkSelected(chip) ? 'teal accent-1' : ''"
+                      @click="getValue(chip, key)"
+                    >
+                      {{ chip }}
+                    </v-chip>
+                  </div> -->
+              </div>
+            </div>
+            <div class="d-flex justify-space-between mx-3 my-2">
               <v-icon @click="removeProduct(index)">mdi-delete-outline</v-icon>
               <div>
+                <span class="text-body-2">Quantity</span>
                 <v-icon
                   class="mr-2 pointer"
                   :disabled="item.count == 1"
@@ -139,7 +164,8 @@
                   >mdi-plus</v-icon
                 >
               </div>
-            </v-card-actions>
+            </div>
+            <!-- </v-card-actions> -->
           </v-card>
           <div class="text-subtitle-2 mx-4 my-2">
             Estimated Total: {{ estimatedTotal }}
@@ -233,10 +259,7 @@ export default {
       // Calculate the estimated total cost of added products in the cart
       let totalCost = 0;
       for (let item of this.getAddedProducts) {
-        totalCost =
-          totalCost +
-          item.count *
-            parseInt(item?.variants?.edges[0]?.node?.priceV2?.amount);
+        totalCost = totalCost + item.count * parseInt(item?.priceV2?.amount);
       }
       return totalCost;
     },
@@ -264,11 +287,7 @@ export default {
     ]),
     getProductAmount(item) {
       // Get the formatted product amount as "amount currencyCode"
-      return (
-        item?.variants?.edges[0]?.node?.priceV2?.amount +
-        " " +
-        item?.variants?.edges[0]?.node?.priceV2?.currencyCode
-      );
+      return item?.priceV2?.amount + " " + item?.priceV2?.currencyCode;
     },
 
     redirectToShopifyCheckout() {

@@ -10,9 +10,11 @@
       <div style="min-width: 300px; max-width: 400px">
         <v-carousel v-if="getSingleProduct" :show-arrows="false">
           <v-carousel-item
-            v-for="(item, i) in getSingleProduct?.images?.edges"
+            v-for="(item, i) in selectedValues?.length
+              ? [getSelectedVariant?.node?.image?.originalSrc]
+              : getSingleProduct?.images?.edges"
             :key="i"
-            :src="item?.node?.originalSrc"
+            :src="selectedValues?.length ? item : item?.node?.originalSrc"
             reverse-transition="fade-transition"
             transition="fade-transition"
           ></v-carousel-item>
@@ -29,7 +31,11 @@
               {{ getSingleProduct && getProductAmount(getSingleProduct) }}
             </div>
             <v-chip
-              v-if="!selectedSize?.availableForSale"
+              v-if="
+                selectedValues?.length
+                  ? !getSelectedVariant?.node?.availableForSale
+                  : false
+              "
               class="white--text"
               color="black"
               >Out of stock</v-chip
@@ -41,29 +47,21 @@
               {{ getSingleProduct?.description }}
             </p>
           </div>
-          <div v-if="getSingleProduct?.variants?.edges" class="pb-2">
-            <h3>Sizes</h3>
-            <div class="d-flex flex-wrap mt-2">
-              <div
-                v-for="item in getSingleProduct?.variants?.edges"
-                :key="item.id"
-                @click="
-                  selectedSize = item.node;
-                  quantity = 1;
-                "
-              >
-                <v-chip
-                  class="mx-2 pointer"
-                  :color="
-                    selectedSize?.id == item.node.id ? 'teal accent-1' : ''
-                  "
-                >
-                  {{
-                    item?.node?.title == "Default Title"
-                      ? "Medium"
-                      : item.node.title
-                  }}
-                </v-chip>
+          <div class="pb-2">
+            <div v-for="(item, index) in resultArray" :key="index">
+              <div v-for="(values, key) in item" :key="key">
+                <h3 class="mt-2">{{ key }}</h3>
+                <div class="d-flex flex-wrap mt-2">
+                  <div v-for="(chip, index) in values" :key="index">
+                    <v-chip
+                      class="mx-2 my-1 pointer"
+                      :color="checkSelected(chip) ? 'teal accent-1' : ''"
+                      @click="getSelectedValues(chip, key)"
+                    >
+                      {{ chip }}
+                    </v-chip>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -72,30 +70,45 @@
             <v-icon
               @click="setQunatity('decrease')"
               class="mr-2 pointer"
-              :disabled="!selectedSize?.availableForSale"
+              :disabled="!getSelectedVariant?.node?.availableForSale"
               >mdi-minus</v-icon
             >
-            {{ !selectedSize?.availableForSale ? 0 : quantity }}
+            {{ !getSelectedVariant?.node?.availableForSale ? 0 : quantity }}
             <v-icon
               @click="setQunatity('increase')"
               class="ml-2 pointer"
-              :disabled="!selectedSize?.availableForSale"
+              :disabled="!getSelectedVariant?.node?.availableForSale"
               >mdi-plus</v-icon
             >
           </div>
         </div>
 
         <div class="d-flex justify-center py-4">
-          <v-btn
-            @click="addCartItems()"
-            width="300px"
-            color="teal accent-1"
-            depressed
-            :disabled="!selectedSize?.availableForSale"
-          >
-            <v-icon class="mx-2" medium>mdi-cart</v-icon>
-            Add to cart
-          </v-btn>
+          <v-tooltip :disabled="!checkValidation" bottom>
+            <template v-slot:activator="{ on }">
+              <div v-on="on">
+                <v-btn
+                  @click="addCartItems()"
+                  width="300px"
+                  color="teal accent-1"
+                  depressed
+                  :disabled="checkValidation"
+                >
+                  <v-icon class="mx-2" medium>mdi-cart</v-icon>
+                  Add to cart
+                </v-btn>
+              </div>
+            </template>
+            <span>
+              {{
+                selectedValues?.length != resultArray?.length
+                  ? validationMessage()
+                  : !getSelectedVariant?.node?.availableForSale
+                  ? "Out of stock"
+                  : ""
+              }}
+            </span>
+          </v-tooltip>
         </div>
       </div>
     </div>
@@ -110,12 +123,53 @@ export default {
     return {
       loader: false, // Variable indicating whether data is being loaded
       quantity: 1, // Quantity of a product (default set to 1)
-      selectedSize: null, // Selected size for a product (initially set to null)
       addedProducts: [], // Array to store added products
+      selectedSize: null, // Selected size for a product (initially set to null)
+      selectedColor: null,
+      resultArray: [],
+      selectedValues: [],
+      selectedVariant: null,
     };
   },
   computed: {
     ...mapState(useStore, ["getSingleProduct"]), // Getter to get the single product data
+
+    getSelectedVariant() {
+      if (this.selectedValues) {
+        this.selectedVariant = this.getSingleProduct?.variants?.edges?.find(
+          (item) =>
+            this.selectedValues.every((param) =>
+              item?.node?.selectedOptions.some(
+                (option) =>
+                  option.name === Object.keys(param)[0] &&
+                  option.value === param[Object.keys(param)[0]]
+              )
+            )
+        );
+        return this.selectedVariant;
+      }
+    },
+
+    getImages() {
+      if (this.selectedColor) {
+        const foundObject = this.getSingleProduct?.variants?.edges.find(
+          (item) => {
+            const hasColor = item?.node?.selectedOptions?.some(
+              (option) => option.value === this.selectedColor
+            );
+            return hasColor;
+          }
+        );
+        return foundObject?.node?.image?.originalSrc;
+      }
+    },
+
+    checkValidation() {
+      return (
+        this.selectedValues?.length != this.resultArray?.length ||
+        !this.getSelectedVariant?.node?.availableForSale
+      );
+    },
   },
   methods: {
     ...mapActions(useStore, [
@@ -145,10 +199,14 @@ export default {
     addCartItems() {
       // Loop to add products to the cart array based on the selected quantity
       for (let i = 0; i < this.quantity; i++) {
-        this.addedProducts.push(this.getSingleProduct);
+        // this.addedProducts.push(this.getSingleProduct);
+        this.addedProducts.push({
+          ...this.getSelectedVariant.node,
+          title: this.getSingleProduct.title,
+        });
       }
 
-      // Update the state with the added products
+      // // Update the state with the added products
       this.setAddedProducts(this.addedProducts);
 
       // Toggle the cart drawer to be visible
@@ -156,6 +214,48 @@ export default {
 
       // Reset the addedProducts array
       this.addedProducts = [];
+    },
+
+    getSelectedValues(chip, key) {
+      const newObj = { [key]: chip };
+      const index = this.selectedValues.findIndex(
+        (obj) => Object.keys(obj)[0] === Object.keys(newObj)[0]
+      );
+
+      if (index !== -1) this.selectedValues.splice(index, 1, newObj);
+      else this.selectedValues.push(newObj);
+    },
+
+    checkSelected(chip) {
+      if (!this.selectedValues) return;
+      const validate = !!this.selectedValues
+        .map((obj) => Object.values(obj)[0])
+        .find((item) => item == chip);
+      return validate;
+    },
+
+    validationMessage() {
+      let msg;
+      let resultArray = [];
+      if (this.resultArray?.length)
+        for (let item of this.resultArray) {
+          resultArray = resultArray.concat(Object.keys(item));
+        }
+      let selectedArray = [];
+      if (this.selectedValues?.length)
+        for (let item of this.selectedValues) {
+          selectedArray = selectedArray.concat(Object.keys(item));
+        }
+      let filteredArray = resultArray.filter((x) => !selectedArray.includes(x));
+      if (filteredArray.length >= 2)
+        msg = `Please select the ${
+          filteredArray.slice(0, filteredArray.length - 1).join(", ") +
+          " " +
+          "and " +
+          filteredArray.slice(-1)
+        }.`;
+      else msg = `Please select the ${filteredArray[0]}.`;
+      return msg;
     },
   },
   mounted() {
@@ -166,12 +266,26 @@ export default {
     this.loader = true;
 
     // If there is a product ID, fetch the single product and set loader to false when done
-    if (id) this.fetchSingleProduct(id, 3).finally(() => (this.loader = false));
+    if (id) this.fetchSingleProduct(id, 5).finally(() => (this.loader = false));
   },
   watch: {
     // Update the selected size based on the received single product data
-    getSingleProduct(value) {
-      this.selectedSize = value?.variants?.edges[0]?.node;
+    getSingleProduct(obj) {
+      if (obj) {
+        let resultObj = {};
+        // Iterate over the array and populate the resultObj
+        obj?.variants?.edges.forEach((item) => {
+          item?.node?.selectedOptions.forEach((option) => {
+            if (!resultObj[option.name]) resultObj[option.name] = [];
+            if (!resultObj[option.name].includes(option.value))
+              resultObj[option.name].push(option.value);
+          });
+        });
+        // Transform resultObj into the desired format
+        this.resultArray = Object.keys(resultObj).map((key) => ({
+          [key]: resultObj[key],
+        }));
+      }
     },
   },
 };

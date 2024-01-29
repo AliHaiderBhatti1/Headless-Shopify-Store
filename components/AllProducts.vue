@@ -114,16 +114,16 @@ export default {
   },
   computed: {
     ...mapState(useStore, ["getAllProducts"]), // Getter to get all the products to the specific category
+
     // Filter the items according to the filter selected
     filteredProducts() {
       const allProducts = [...this.getAllProducts];
 
       if (this.searchByTitle) {
+        const searchLowerCase = this.searchByTitle.toLowerCase();
         return allProducts.filter((item) =>
           item.node.title
-            ? item.node.title
-                .toLowerCase()
-                .includes(this.searchByTitle.toLowerCase())
+            ? item.node.title.toLowerCase().includes(searchLowerCase)
             : false
         );
       }
@@ -132,12 +132,12 @@ export default {
         this.sortingOrder?.value === "ascending" ||
         this.sortingOrder?.value === "descending"
       ) {
-        const sortOrder = this.sortingOrder.value === "ascending" ? 1 : -1;
-
         return allProducts.sort((a, b) => {
-          const nameA = a.node.title.toUpperCase();
-          const nameB = b.node.title.toUpperCase();
-          return sortOrder * nameA.localeCompare(nameB);
+          const nameA = a.node.title.toLowerCase();
+          const nameB = b.node.title.toLowerCase();
+          if (this.sortingOrder?.value === "ascending")
+            return nameA.localeCompare(nameB);
+          else return nameB.localeCompare(nameA);
         });
       }
 
@@ -145,13 +145,11 @@ export default {
         this.sortingOrder?.value === "asc" ||
         this.sortingOrder?.value === "desc"
       ) {
-        const sortOrder = this.sortingOrder.value === "asc" ? 1 : -1;
-
         return allProducts.sort((a, b) => {
           const priceA = a.node.variants.edges[0]?.node.priceV2.amount || 0;
           const priceB = b.node.variants.edges[0]?.node.priceV2.amount || 0;
-
-          return sortOrder * (priceA - priceB);
+          if (this.sortingOrder?.value == "asc") return priceA - priceB;
+          else return priceB - priceA;
         });
       }
 
