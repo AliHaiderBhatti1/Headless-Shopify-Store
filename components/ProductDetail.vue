@@ -48,7 +48,7 @@
             </p>
           </div>
           <div class="pb-2">
-            <div v-for="(item, index) in resultArray" :key="index">
+            <div v-for="(item, index) in requiredOptions" :key="index">
               <div v-for="(values, key) in item" :key="key">
                 <h3 class="mt-2">{{ key }}</h3>
                 <div class="d-flex flex-wrap mt-2">
@@ -101,7 +101,7 @@
             </template>
             <span>
               {{
-                selectedValues?.length != resultArray?.length
+                selectedValues?.length != requiredOptions?.length
                   ? validationMessage()
                   : !getSelectedVariant?.node?.availableForSale
                   ? "Out of stock"
@@ -124,9 +124,7 @@ export default {
       loader: false, // Variable indicating whether data is being loaded
       quantity: 1, // Quantity of a product (default set to 1)
       addedProducts: [], // Array to store added products
-      selectedSize: null, // Selected size for a product (initially set to null)
-      selectedColor: null,
-      resultArray: [],
+      requiredOptions: [],
       selectedValues: [],
       selectedVariant: null,
     };
@@ -134,10 +132,12 @@ export default {
   computed: {
     ...mapState(useStore, ["getSingleProduct"]), // Getter to get the single product data
 
+    // Getter to get the selected variant based on selected options
     getSelectedVariant() {
       if (this.selectedValues) {
         this.selectedVariant = this.getSingleProduct?.variants?.edges?.find(
           (item) =>
+            // Check if all selected parameters match variant's selected options
             this.selectedValues.every((param) =>
               item?.node?.selectedOptions.some(
                 (option) =>
@@ -150,23 +150,12 @@ export default {
       }
     },
 
-    getImages() {
-      if (this.selectedColor) {
-        const foundObject = this.getSingleProduct?.variants?.edges.find(
-          (item) => {
-            const hasColor = item?.node?.selectedOptions?.some(
-              (option) => option.value === this.selectedColor
-            );
-            return hasColor;
-          }
-        );
-        return foundObject?.node?.image?.originalSrc;
-      }
-    },
-
+    // Getter to check validation based on selected values and variant availability
     checkValidation() {
       return (
-        this.selectedValues?.length != this.resultArray?.length ||
+        // Check if the number of selected values is not equal to the required number
+        this.selectedValues?.length != this.requiredOptions?.length ||
+        // Check if the selected variant is not available for sale
         !this.getSelectedVariant?.node?.availableForSale
       );
     },
@@ -216,16 +205,18 @@ export default {
       this.addedProducts = [];
     },
 
+    // Method to update selected values array based on the options
     getSelectedValues(chip, key) {
       const newObj = { [key]: chip };
       const index = this.selectedValues.findIndex(
         (obj) => Object.keys(obj)[0] === Object.keys(newObj)[0]
       );
-
+      // Update existing value or add new value to selectedValues array
       if (index !== -1) this.selectedValues.splice(index, 1, newObj);
       else this.selectedValues.push(newObj);
     },
 
+    // Method to highlight a specific option is selected among the selected values
     checkSelected(chip) {
       if (!this.selectedValues) return;
       const validate = !!this.selectedValues
@@ -234,19 +225,22 @@ export default {
       return validate;
     },
 
+    // Method to generate a validation message based on required and selected options
     validationMessage() {
       let msg;
-      let resultArray = [];
-      if (this.resultArray?.length)
-        for (let item of this.resultArray) {
-          resultArray = resultArray.concat(Object.keys(item));
+      let requiredOptions = [];
+      if (this.requiredOptions?.length)
+        for (let item of this.requiredOptions) {
+          requiredOptions = requiredOptions.concat(Object.keys(item));
         }
       let selectedArray = [];
       if (this.selectedValues?.length)
         for (let item of this.selectedValues) {
           selectedArray = selectedArray.concat(Object.keys(item));
         }
-      let filteredArray = resultArray.filter((x) => !selectedArray.includes(x));
+      let filteredArray = requiredOptions.filter(
+        (x) => !selectedArray.includes(x)
+      );
       if (filteredArray.length >= 2)
         msg = `Please select the ${
           filteredArray.slice(0, filteredArray.length - 1).join(", ") +
@@ -282,7 +276,7 @@ export default {
           });
         });
         // Transform resultObj into the desired format
-        this.resultArray = Object.keys(resultObj).map((key) => ({
+        this.requiredOptions = Object.keys(resultObj).map((key) => ({
           [key]: resultObj[key],
         }));
       }

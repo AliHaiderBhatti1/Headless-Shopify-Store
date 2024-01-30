@@ -123,7 +123,6 @@
               <img class="mt-2" :src="item?.image?.originalSrc" height="100" />
             </v-list-item>
 
-            <!-- <v-card-actions> -->
             <div
               v-for="(val, index) in item?.selectedOptions"
               :key="index"
@@ -165,33 +164,38 @@
                 >
               </div>
             </div>
-            <!-- </v-card-actions> -->
           </v-card>
           <div class="text-subtitle-2 mx-4 my-2">
             Estimated Total: {{ estimatedTotal }}
           </div>
         </div>
-        <div v-else style="height: calc(100vh - 100px)"></div>
+        <div v-else style="height: calc(100vh - 120px)"></div>
 
         <div class="d-flex justify-center">
-          <v-btn
-            :disabled="!getAddedProducts?.length"
-            width="260px"
-            color="teal accent-1"
-            class="mx-3"
-            depressed
-            @click="redirectToShopifyCheckout"
-          >
-            Proceed to checkout
-            <v-progress-circular
-              v-if="loader"
-              size="20"
-              width="2"
-              color="black"
-              class="mx-2"
-              indeterminate
-            ></v-progress-circular>
-          </v-btn>
+          <v-tooltip :disabled="!!getAddedProducts?.length" bottom>
+            <template v-slot:activator="{ on }">
+              <div v-on="on">
+                <v-btn
+                  :disabled="!getAddedProducts?.length || loader"
+                  width="260px"
+                  color="teal accent-1"
+                  class="mx-3"
+                  depressed
+                  @click="redirectToShopifyCheckout"
+                >
+                  Proceed to checkout
+                  <v-progress-circular
+                    v-if="loader"
+                    size="20"
+                    width="2"
+                    color="black"
+                    class="mx-2"
+                    indeterminate
+                  ></v-progress-circular>
+                </v-btn></div
+            ></template>
+            <span>Please select any item</span>
+          </v-tooltip>
         </div>
       </v-list>
     </v-navigation-drawer>
@@ -214,7 +218,6 @@ export default {
       drawer: false, // Controls the main drawer visibility
       fixed: false, // Controls whether the app bar is fixed
       snackbar: false, // Controls the snackbar visibility
-      addedProducts: [], // Array to store added products in the cart
       items: [
         // Navigation items with icons, titles, and corresponding routes
         {
@@ -255,6 +258,7 @@ export default {
       "getSnackbarFlag", // Get snackbar flag value (true or false)
       "getErrorMsg", // Getter to get error message from API
     ]),
+
     estimatedTotal() {
       // Calculate the estimated total cost of added products in the cart
       let totalCost = 0;
@@ -285,6 +289,7 @@ export default {
       "setAddedProducts", // Method to set all the products are buying add in the cart
       "changeQuantityItems", // Increase or decrease the quantity of the item
     ]),
+
     getProductAmount(item) {
       // Get the formatted product amount as "amount currencyCode"
       return item?.priceV2?.amount + " " + item?.priceV2?.currencyCode;
@@ -302,6 +307,7 @@ export default {
     getCartDrawerValue(value) {
       this.rightDrawer = value;
     },
+
     rightDrawer(value) {
       this.toggleCartDrawer(value);
     },

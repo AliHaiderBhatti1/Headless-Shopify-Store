@@ -119,6 +119,7 @@ export default {
     filteredProducts() {
       const allProducts = [...this.getAllProducts];
 
+      // Filter on the basis of title added in input
       if (this.searchByTitle) {
         const searchLowerCase = this.searchByTitle.toLowerCase();
         return allProducts.filter((item) =>
@@ -128,6 +129,7 @@ export default {
         );
       }
 
+      // Filter items alphabetically (Ascending or Descending)
       if (
         this.sortingOrder?.value === "ascending" ||
         this.sortingOrder?.value === "descending"
@@ -141,6 +143,7 @@ export default {
         });
       }
 
+      // Filter items numerically (Ascending or Descending)
       if (
         this.sortingOrder?.value === "asc" ||
         this.sortingOrder?.value === "desc"
