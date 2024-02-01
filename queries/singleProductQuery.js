@@ -23,6 +23,7 @@ export const getSingleProduct = async (productId, imagesPerItem = 3) => {
                   value
                 }
                 availableForSale
+                quantityAvailable
                 image {
                   originalSrc
                 }

@@ -153,16 +153,25 @@
                 <v-icon
                   class="mr-2 pointer"
                   :disabled="item.count == 1"
-                  @click="changeQuantityItems(item, 'decrease')"
+                  @click="changeQuantityItems(item, 'decrease', item.count - 1)"
                   >mdi-minus</v-icon
                 >
                 {{ item.count }}
                 <v-icon
                   class="ml-2 pointer"
-                  @click="changeQuantityItems(item, 'increase')"
+                  @click="changeQuantityItems(item, 'increase', item.count + 1)"
                   >mdi-plus</v-icon
                 >
               </div>
+            </div>
+            <div v-if="checkValidation(item.id)" class="text-red px-2">
+              {{
+                item?.quantityAvailable === 1
+                  ? "Only 1 item is available!"
+                  : item?.quantityAvailable > 1
+                  ? `Only ${item?.quantityAvailable} items are available!`
+                  : ""
+              }}
             </div>
           </v-card>
           <div class="text-subtitle-2 mx-4 my-2">
@@ -257,6 +266,7 @@ export default {
       "getCartDrawerValue", // Get the cart drawer value (true or false)
       "getSnackbarFlag", // Get snackbar flag value (true or false)
       "getErrorMsg", // Getter to get error message from API
+      "getErrorArray",
     ]),
 
     estimatedTotal() {
@@ -281,6 +291,10 @@ export default {
       }
       return count;
     },
+
+    checkValidation() {
+      return (id) => !!this.getErrorArray.find((item) => item === id);
+    },
   },
   methods: {
     ...mapActions(useStore, [
@@ -298,9 +312,13 @@ export default {
     redirectToShopifyCheckout() {
       // Set loader to true to indicate that data is being loaded
       this.loader = true;
+      const cartItems = this.getAddedProducts.map((item) => ({
+        variantId: item.id,
+        quantity: item.count,
+      }));
 
       // Execute checkoutQuery() and set loader to false when done
-      checkoutQuery().finally(() => (this.loader = false));
+      checkoutQuery(cartItems).finally(() => (this.loader = false));
     },
   },
   watch: {

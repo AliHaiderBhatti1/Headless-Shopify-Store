@@ -12,6 +12,7 @@ export const useStore = defineStore("storeId", {
       cartDrawer: false, //  State variable indicating whether the cart drawer is open or closed.
       snackbarFlag: false, // State variable indicating whether a snackbar notification should be displayed.
       snackbarMsg: null, // State to store the message content for the snackbar notification.
+      errorArray: [], // State to add the ids of items
     };
   },
   getters: {
@@ -21,6 +22,7 @@ export const useStore = defineStore("storeId", {
     getCartDrawerValue: (state) => state.cartDrawer, // Getter to get the boolean value indicating whether the cart drawer is open or closed.
     getSnackbarFlag: (state) => state.snackbarFlag, // Getter to get the boolean value indicating whether a snackbar notification should be displayed.
     getErrorMsg: (state) => state.snackbarMsg, // Getter to get the content of the snackbar message, which is typically an error message.
+    getErrorArray: (state) => state.errorArray,
   },
   actions: {
     // Setter to set products
@@ -56,20 +58,29 @@ export const useStore = defineStore("storeId", {
     },
 
     // Change quantity cart items
-    changeQuantityItems(obj, value) {
+    changeQuantityItems(obj, value, quantity) {
       const index = this.addedProducts.findIndex((item) => item.id == obj.id);
       if (index != -1) {
-        if (value == "decrease")
+        if (value == "decrease") {
           Object.assign(this.addedProducts[index], {
             ...this.addedProducts[index],
             count: (this.addedProducts[index].count || 0) - 1,
           });
-        else if (value == "increase")
-          Object.assign(this.addedProducts[index], {
-            ...this.addedProducts[index],
-            count: (this.addedProducts[index].count || 0) + 1,
-          });
+          this.setErrorArray(obj.id, "remove");
+        } else if (value == "increase")
+          if (quantity <= obj.quantityAvailable)
+            Object.assign(this.addedProducts[index], {
+              ...this.addedProducts[index],
+              count: (this.addedProducts[index].count || 0) + 1,
+            });
+          else this.setErrorArray(obj.id, "add");
       }
+    },
+
+    // Setter to set error flag
+    setErrorArray(itemId, value) {
+      if (value == "add") this.errorArray = [...this.errorArray, itemId];
+      else this.errorArray = this.errorArray.filter((id) => id != itemId);
     },
 
     // Toggle cart drawer

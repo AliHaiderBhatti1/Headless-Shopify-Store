@@ -1,9 +1,14 @@
 import axios from "axios";
-export const checkoutQuery = async () => {
+export const checkoutQuery = async (cartItems) => {
   const graphqlQuery = {
     query: `
           mutation {
-            checkoutCreate(input: {}) {
+            checkoutCreate(input: {
+              lineItems: ${JSON.stringify(cartItems).replace(
+                /"([^(")"]+)":/g,
+                "$1:"
+              )}
+            }) {
               checkout {
                 id
                 webUrl

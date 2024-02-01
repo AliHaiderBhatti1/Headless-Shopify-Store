@@ -68,18 +68,37 @@
           <div>
             <h3 class="py-1">Quantity</h3>
             <v-icon
-              @click="setQunatity('decrease')"
+              @click="
+                setQunatity(
+                  'decrease',
+                  getSelectedVariant?.node?.quantityAvailable
+                )
+              "
               class="mr-2 pointer"
-              :disabled="!getSelectedVariant?.node?.availableForSale"
+              :disabled="!quantityValidation"
               >mdi-minus</v-icon
             >
-            {{ !getSelectedVariant?.node?.availableForSale ? 0 : quantity }}
+            {{ !quantityValidation ? 0 : quantity }}
             <v-icon
-              @click="setQunatity('increase')"
+              @click="
+                setQunatity(
+                  'increase',
+                  getSelectedVariant?.node?.quantityAvailable
+                )
+              "
               class="ml-2 pointer"
-              :disabled="!getSelectedVariant?.node?.availableForSale"
+              :disabled="!quantityValidation"
               >mdi-plus</v-icon
             >
+          </div>
+          <div v-if="errorFlag" class="text-red">
+            {{
+              getSelectedVariant?.node?.quantityAvailable === 1
+                ? "Only 1 item is available!"
+                : getSelectedVariant?.node?.quantityAvailable > 1
+                ? `Only ${getSelectedVariant?.node?.quantityAvailable} items are available!`
+                : ""
+            }}
           </div>
         </div>
 
@@ -127,6 +146,7 @@ export default {
       requiredOptions: [],
       selectedValues: [],
       selectedVariant: null,
+      errorFlag: false,
     };
   },
   computed: {
@@ -134,7 +154,7 @@ export default {
 
     // Getter to get the selected variant based on selected options
     getSelectedVariant() {
-      if (this.selectedValues) {
+      if (this.selectedValues?.length) {
         this.selectedVariant = this.getSingleProduct?.variants?.edges?.find(
           (item) =>
             // Check if all selected parameters match variant's selected options
@@ -159,6 +179,11 @@ export default {
         !this.getSelectedVariant?.node?.availableForSale
       );
     },
+
+    // Getter to check the quantity available for selected variant
+    quantityValidation() {
+      return this.getSelectedVariant?.node?.availableForSale;
+    },
   },
   methods: {
     ...mapActions(useStore, [
@@ -168,9 +193,11 @@ export default {
     ]),
 
     // Method to update the quantity based on the action (increase or decrease)
-    setQunatity(value) {
+    setQunatity(value, availability) {
       // Increase quantity by 1
-      if (value == "increase") this.quantity++;
+      if (value == "increase")
+        if (this.quantity + 1 <= availability) this.quantity++;
+        else this.errorFlag = true;
       // Decrease quantity by 1, but ensure it doesn't go below 1
       else if (this.quantity != 1 && "decrease") this.quantity--;
     },
@@ -279,6 +306,20 @@ export default {
         this.requiredOptions = Object.keys(resultObj).map((key) => ({
           [key]: resultObj[key],
         }));
+      }
+    },
+
+    // Watcher to check the qunatity of the selected variant
+    quantity(value) {
+      if (value <= this.getSelectedVariant?.node?.quantityAvailable)
+        this.errorFlag = false;
+    },
+
+    // Watcher to watch the selected variant
+    selectedVariant(value) {
+      if (value) {
+        this.errorFlag = false; // Reset flag error when variant changes
+        this.quantity = 1; // Reset the quantity value to 1
       }
     },
   },
